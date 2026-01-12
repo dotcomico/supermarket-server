@@ -17,6 +17,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import productRoutes from './routes/products.js';
 import orderRoutes from './routes/orders.js';
+import categoryRoutes from './routes/categories.js';
 
 // ES6 __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -40,7 +41,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
-
+app.use('/api/categories', categoryRoutes);
 
 // Health check route
 app.get('/', (req, res) => {
@@ -60,9 +61,12 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectDB();
-    
+
     // Sync database (creates tables if they don't exist)
-    await sequelize.sync({ force: process.env.NODE_ENV === 'development' }); // Use { force: true } to drop tables on restart
+    await sequelize.sync({
+      alter: process.env.NODE_ENV === 'development',
+      force: false
+    });
     console.log('✅ Database synchronized');
 
     app.listen(PORT, () => {

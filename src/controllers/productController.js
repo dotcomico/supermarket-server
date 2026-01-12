@@ -1,9 +1,14 @@
 import Product from '../models/Product.js';
-
+import Category from '../models/Category.js'; 
 // Get all products
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.findAll();
+    const products = await Product.findAll({include: {
+        model: Category,
+        as: 'category',
+        attributes: ['name', 'slug'] // Only return what the frontend needs
+      }
+    });
     res.json(products);
   } catch (error) {
     console.error('Get all products error:', error);
@@ -14,7 +19,9 @@ export const getAllProducts = async (req, res) => {
 // Get product by ID
 export const getProductById = async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product = await Product.findByPk(req.params.id, {
+      include: { model: Category, as: 'category' }
+    });
     
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
@@ -30,11 +37,11 @@ export const getProductById = async (req, res) => {
 // Create new product (with image upload)
 export const createProduct = async (req, res) => {
   try {
-    const { name, category, description, price, stock } = req.body;
+   const { name, categoryId, description, price, stock } = req.body;
 
     // Validate required fields
-    if (!name || !price) {
-      return res.status(400).json({ message: 'Name and price are required' });
+if (!name || !price || !categoryId) {
+      return res.status(400).json({ message: 'Name, price, and category are required' });
     }
 
     // Get image path if uploaded
@@ -42,7 +49,7 @@ export const createProduct = async (req, res) => {
 
     const newProduct = await Product.create({
       name,
-      category,
+      categoryId,
       description,
       price: parseFloat(price),
       stock: parseInt(stock) || 0,
@@ -62,7 +69,7 @@ export const createProduct = async (req, res) => {
 // Update product
 export const updateProduct = async (req, res) => {
   try {
-    const { name, category, description, price, stock } = req.body;
+    const { name, categoryId, description, price, stock } = req.body;
     const product = await Product.findByPk(req.params.id);
 
     if (!product) {
@@ -72,7 +79,7 @@ export const updateProduct = async (req, res) => {
     // Prepare update data
     const updateData = {
       name: name || product.name,
-      category: category || product.category,
+     categoryId: categoryId || product.categoryId,
       description: description || product.description,
       price: price ? parseFloat(price) : product.price,
       stock: stock !== undefined ? parseInt(stock) : product.stock
