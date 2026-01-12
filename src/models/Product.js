@@ -1,5 +1,5 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import { DataTypes, Op } from 'sequelize'; // Add Op for search
+import sequelize from '../config/database.js'
 
 const Product = sequelize.define('Product', {
   name: { type: DataTypes.STRING, allowNull: false },
@@ -7,7 +7,7 @@ const Product = sequelize.define('Product', {
   price: { type: DataTypes.FLOAT, allowNull: false },
   stock: { type: DataTypes.INTEGER, defaultValue: 0 },
   image: { type: DataTypes.STRING }, // Stores the file path/filename
-categoryId: {
+  categoryId: {
     type: DataTypes.INTEGER,
     references: {
       model: 'Categories',

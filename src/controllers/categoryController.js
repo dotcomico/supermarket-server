@@ -22,13 +22,27 @@ export const createCategory = async (req, res) => {
 
 export const getCategoryTree = async (req, res) => {
   try {
-    // Fetch only top-level categories and include their children
     const categories = await Category.findAll({
       where: { parentId: null },
-      include: {
-        all: true, 
-        nested: true // allows for infinite depth in the JSON response
-      }
+      include: [{
+        model: Category,
+        as: 'children',
+        include: [{ 
+          model: Category, 
+          as: 'children' // supports 2 levels deep
+        }]
+      }]
+    });
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getAllCategories = async (req, res) => {
+  try {
+    const categories = await Category.findAll({
+      include: { model: Category, as: 'parent', attributes: ['name'] }
     });
     res.json(categories);
   } catch (error) {

@@ -8,21 +8,25 @@ import {
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  validateProduct,
+  handleValidationErrors
 } from '../controllers/productController.js';
 
 const router = express.Router();
 
-// ANYONE can see products
+// Public routes - Anyone can view products
 router.get('/', getAllProducts);
 router.get('/:id', getProductById);
 
-// ONLY Admins and Managers can add/update products
+// Protected routes - Admin/Manager only
 router.post(
   '/', 
   auth, 
   checkRole(ROLES.ADMIN, ROLES.MANAGER), 
-  upload.single('image'), 
+  upload.single('image'),
+  validateProduct,
+  handleValidationErrors,
   createProduct
 );
 
@@ -30,11 +34,17 @@ router.put(
   '/:id', 
   auth, 
   checkRole(ROLES.ADMIN, ROLES.MANAGER), 
-  upload.single('image'), 
+  upload.single('image'),
+  validateProduct,
+  handleValidationErrors,
   updateProduct
 );
 
-// ONLY Admins can delete a product
-router.delete('/:id', auth, checkRole(ROLES.ADMIN), deleteProduct);
+router.delete(
+  '/:id', 
+  auth, 
+  checkRole(ROLES.ADMIN), 
+  deleteProduct
+);
 
 export default router;
