@@ -1,7 +1,11 @@
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
-export const auth = (req, res, next) => {
-  // 1. Get token from the header (format: Bearer <token>)
+/**
+ * Authentication Middleware
+ */
+export const auth = async (req, res, next) => {
+  // Get token from the header (format: Bearer <token>)
   const authHeader = req.header('Authorization');
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -10,15 +14,33 @@ export const auth = (req, res, next) => {
   }
 
   try {
-    // 2. Verify token using your secret from .env
+    // Verify token signature and decode payload
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // 3. ATTACH user data to the request object
-    // Now, req.user exists for the next middleware (checkRole) to use!
-    req.user = decoded; 
+    // Fetch FRESH user data from database (including current role)
+    const user = await User.findByPk(decoded.id, {
+      attributes: ['id', 'username', 'email', 'role']
+    });
+
+    // Handle case where user was deleted after token was issued
+    if (!user) {
+      return res.status(401).json({ message: "User no longer exists" });
+    }
+
+    // Attach CURRENT database values to request (not token values)
+    req.user = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role 
+    };
     
     next();
   } catch (err) {
-    res.status(401).json({ message: "Token is not valid" });
+    // Token expired, invalid signature, or malformed
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: "Token expired" });
+    }
+    return res.status(401).json({ message: "Token is not valid" });
   }
 };
