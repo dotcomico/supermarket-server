@@ -9,7 +9,6 @@ import { ROLES, ORDER_STATUS } from '../config/constants.js';
 export const getAllOrders = async (req, res) => {
   try {
     let orders;
-
     if (req.user.role === ROLES.ADMIN || req.user.role === ROLES.MANAGER) {
       orders = await Order.findAll({
         include: [
@@ -21,7 +20,18 @@ export const getAllOrders = async (req, res) => {
         ],
         order: [['createdAt', 'DESC']]
       });
-    } else {
+      res.json(orders);
+    }
+  
+  } catch (error) {
+    console.error('Get all orders error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+// Get all user orders (Customers see only their own)
+export const getAllUserOrders = async (req, res) => {
+   try {
+    let orders;
       orders = await Order.findAll({
         where: { UserId: req.user.id },
         include: [
@@ -32,15 +42,12 @@ export const getAllOrders = async (req, res) => {
         ],
         order: [['createdAt', 'DESC']]
       });
-    }
-
     res.json(orders);
   } catch (error) {
     console.error('Get all orders error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
-};
-
+}
 // Get specific order by ID
 export const getOrderById = async (req, res) => {
   try {

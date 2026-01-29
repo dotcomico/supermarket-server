@@ -6,7 +6,8 @@ import {
   getOrderById,
   createOrder,
   updateOrderStatus,
-  deleteOrder
+  deleteOrder,
+  getAllUserOrders
 } from "../controllers/orderController.js";
 import { ROLES } from "../config/constants.js";
 
@@ -14,6 +15,8 @@ const router = express.Router();
 
 // 1. Customers can see their own orders, Admin/Manager sees all
 router.get("/", auth, getAllOrders);
+
+router.get("/privet", auth, getAllUserOrders);
 
 // 2. Specific details of one order
 router.get("/:id", auth, getOrderById);
