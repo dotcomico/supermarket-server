@@ -137,15 +137,17 @@ export const createProduct = async (req, res) => {
 };
 
 // Update product
+// Update product (validation in route)
 export const updateProduct = async (req, res) => {
   try {
-    const { name, categoryId, description, price, stock } = req.body;
+    const { name, categoryId, description, price, stock, removeImage, removeImage360 } = req.body;
     const product = await Product.findByPk(req.params.id);
 
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    // Verify category if being updated
     if (categoryId) {
       const category = await Category.findByPk(categoryId);
       if (!category) {
@@ -153,6 +155,7 @@ export const updateProduct = async (req, res) => {
       }
     }
 
+    // Prepare update data
     const updateData = {
       name: name || product.name,
       categoryId: categoryId || product.categoryId,
@@ -161,16 +164,23 @@ export const updateProduct = async (req, res) => {
       stock: stock !== undefined ? parseInt(stock) : product.stock
     };
 
-    // Handle image uploads
-    if (req.files?.image?.[0]) {
-      updateData.image = `/uploads/${req.files.image[0].filename}`;
+    // Handle main image: new upload, explicit removal, or keep existing
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+      // Optionally: delete old file from disk here
+    } else if (removeImage === 'true') {
+      updateData.image = null;
+      // Optionally: delete old file from disk here
     }
-    if (req.files?.image360?.[0]) {
-      updateData.image360 = `/uploads/${req.files.image360[0].filename}`;
+
+    // Handle 360° image removal (if you support 360° uploads)
+    if (removeImage360 === 'true') {
+      updateData.image360 = null;
     }
 
     await product.update(updateData);
 
+    // Fetch updated product with category
     const updatedProduct = await Product.findByPk(product.id, {
       include: { model: Category, as: 'category' }
     });
