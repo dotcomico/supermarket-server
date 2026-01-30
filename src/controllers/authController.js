@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { ROLES } from '../config/constants.js';
+import logger from '../utils/logger.js';
 
 // Validation rules
 export const validateRegister = [
@@ -57,6 +58,8 @@ export const register = async (req, res) => {
       role: role || ROLES.CUSTOMER
     });
 
+    logger.info('User registered', { userId: newUser.id, email });
+
     // Generate JWT token
     const token = jwt.sign(
       { id: newUser.id, role: newUser.role },
@@ -75,6 +78,7 @@ export const register = async (req, res) => {
       }
     });
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Register error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -97,14 +101,18 @@ export const login = async (req, res) => {
     // Find user
     const user = await User.findOne({ where: { email } });
     if (!user) {
+      logger.warn('Login failed', { email, reason: 'wrong password' });
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      logger.warn('Login failed', { email, reason: 'wrong password' });
       return res.status(401).json({ message: 'Invalid email or password' });
     }
+    
+    logger.info('User logged in', { userId: user.id });
 
     // Generate JWT token
     const token = jwt.sign(
@@ -124,6 +132,7 @@ export const login = async (req, res) => {
       }
     });
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -142,6 +151,7 @@ export const getMe = async (req, res) => {
 
     res.json(user);
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Get me error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }

@@ -4,6 +4,7 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import sequelize from '../config/database.js';
 import { ROLES, ORDER_STATUS } from '../config/constants.js';
+import logger from '../utils/logger.js'; // Added logger import
 
 // Get all orders (Admin sees all, Customers see only their own)
 export const getAllOrders = async (req, res) => {
@@ -22,12 +23,13 @@ export const getAllOrders = async (req, res) => {
       });
       res.json(orders);
     }
-  
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Get all orders error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 // Get all user orders (Customers see only their own)
 export const getAllUserOrders = async (req, res) => {
    try {
@@ -44,10 +46,12 @@ export const getAllUserOrders = async (req, res) => {
       });
     res.json(orders);
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Get all orders error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 }
+
 // Get specific order by ID
 export const getOrderById = async (req, res) => {
   try {
@@ -75,6 +79,7 @@ export const getOrderById = async (req, res) => {
 
     res.json(order);
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Get order error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -154,6 +159,9 @@ export const createOrder = async (req, res) => {
     // Commit transaction
     await transaction.commit();
 
+    // Added logger for order creation
+    logger.info('Order created', { orderId: order.id, userId: req.user.id, total: totalAmount });
+
     // Fetch complete order with products
     const completeOrder = await Order.findByPk(order.id, {
       include: [
@@ -171,6 +179,7 @@ export const createOrder = async (req, res) => {
 
   } catch (error) {
     await transaction.rollback();
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Create order error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -208,6 +217,7 @@ export const updateOrderStatus = async (req, res) => {
       order: updatedOrder
     });
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Update order status error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -227,6 +237,7 @@ export const deleteOrder = async (req, res) => {
 
     res.json({ message: 'Order deleted successfully' });
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Delete order error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }

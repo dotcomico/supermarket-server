@@ -1,7 +1,9 @@
 import { body, validationResult } from 'express-validator';
-import { Op } from 'sequelize'; // Add at top
+import { Op } from 'sequelize';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
+import logger from '../utils/logger.js'; 
+
 // Validation middleware
 export const validateProduct = [
   body('name').trim().notEmpty().withMessage('Name is required')
@@ -72,6 +74,7 @@ export const getAllProducts = async (req, res) => {
       }
     });
   } catch (error) {
+    logger.error('Operation failed', { error: error.message });
     console.error('Get all products error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -94,6 +97,7 @@ export const getProductById = async (req, res) => {
 
     res.json(product);
   } catch (error) {
+    logger.error('Operation failed', { error: error.message });
     console.error('Get product error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -121,6 +125,8 @@ export const createProduct = async (req, res) => {
       image,
       image360
     });
+    
+    logger.info('Product created', { productId: newProduct.id, name });
 
     const completeProduct = await Product.findByPk(newProduct.id, {
       include: { model: Category, as: 'category' }
@@ -131,13 +137,13 @@ export const createProduct = async (req, res) => {
       product: completeProduct
     });
   } catch (error) {
+    logger.error('Operation failed', { error: error.message });
     console.error('Create product error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
 // Update product
-// Update product (validation in route)
 export const updateProduct = async (req, res) => {
   try {
     const { name, categoryId, description, price, stock, removeImage, removeImage360 } = req.body;
@@ -164,16 +170,14 @@ export const updateProduct = async (req, res) => {
       stock: stock !== undefined ? parseInt(stock) : product.stock
     };
 
-    // Handle main image: new upload, explicit removal, or keep existing
+    // Handle main image
     if (req.file) {
       updateData.image = `/uploads/${req.file.filename}`;
-      // Optionally: delete old file from disk here
     } else if (removeImage === 'true') {
       updateData.image = null;
-      // Optionally: delete old file from disk here
     }
 
-    // Handle 360° image removal (if you support 360° uploads)
+    // Handle 360° image removal
     if (removeImage360 === 'true') {
       updateData.image360 = null;
     }
@@ -190,6 +194,7 @@ export const updateProduct = async (req, res) => {
       product: updatedProduct
     });
   } catch (error) {
+    logger.error('Operation failed', { error: error.message });
     console.error('Update product error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -204,13 +209,16 @@ export const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    const productId = product.id; 
     await product.destroy();
+    logger.info('Product deleted', { productId });
 
     res.json({
       message: 'Product deleted successfully',
       deletedId: req.params.id
     });
   } catch (error) {
+    logger.error('Operation failed', { error: error.message });
     console.error('Delete product error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }

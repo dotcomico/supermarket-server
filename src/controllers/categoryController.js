@@ -1,5 +1,7 @@
+import { Op } from 'sequelize';
 import Category from '../models/Category.js';
 import Product from '../models/Product.js';
+import logger from '../utils/logger.js'; // Added logger import
 
 export const createCategory = async (req, res) => {
   try {
@@ -17,6 +19,7 @@ export const createCategory = async (req, res) => {
 
     res.status(201).json(category);
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     res.status(400).json({ error: error.message });
   }
 };
@@ -36,6 +39,7 @@ export const getCategoryTree = async (req, res) => {
     });
     res.json(categories);
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     res.status(500).json({ error: error.message });
   }
 };
@@ -47,6 +51,7 @@ export const getAllCategories = async (req, res) => {
     });
     res.json(categories);
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     res.status(500).json({ error: error.message });
   }
 };
@@ -133,6 +138,7 @@ export const getProductsByCategory = async (req, res) => {
       }
     });
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Get products by category error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -189,6 +195,7 @@ export const getCategoryBySlug = async (req, res) => {
       breadcrumbs
     });
   } catch (error) {
+    logger.error('Operation failed', { error: error.message }); // Added logger
     console.error('Get category by slug error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
