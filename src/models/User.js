@@ -10,16 +10,16 @@ const User = sequelize.define('User', {
         type: DataTypes.ENUM(...Object.values(ROLES)),
         defaultValue: ROLES.CUSTOMER
     },
-    address: {
-        type: DataTypes.JSON,
-        allowNull: true,
-        defaultValue: {
-            street: "",
-            houseNumber: "",
-            apartment: "",
-            city: "",
-            zipCode: ""
-        }
-    }
+    // address: {
+    //     type: DataTypes.JSON,
+    //     allowNull: true,
+    //     defaultValue: {
+    //         street: "",
+    //         houseNumber: "",
+    //         apartment: "",
+    //         city: "",
+    //         zipCode: ""
+    //     }
+    // }
 });
 export default User;
